@@ -1,0 +1,10 @@
+{
+  "name": "jira",
+  "description": "Token-efficient Jira integration via Atlassian CLI with progressive skill disclosure",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jack Hutson"
+  },
+  "license": "MIT",
+  "keywords": ["jira", "atlassian", "acli", "project-management"]
+}

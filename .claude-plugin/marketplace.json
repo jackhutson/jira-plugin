@@ -1,0 +1,13 @@
+{
+  "name": "jira-marketplace",
+  "owner": {
+    "name": "Jack Hutson"
+  },
+  "plugins": [
+    {
+      "name": "jira",
+      "source": "./",
+      "description": "Token-efficient Jira integration via Atlassian CLI with progressive skill disclosure"
+    }
+  ]
+}

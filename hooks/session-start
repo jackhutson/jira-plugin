@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# SessionStart hook for jira plugin
+# Checks ACLI installation and Jira auth status, injects guidance if needed.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+message=""
+
+# Check 1: Is acli installed?
+if ! command -v acli &>/dev/null; then
+    message="⚠️ **Jira Plugin: ACLI not installed.** The Jira plugin requires the Atlassian CLI. Install it with:\n\n\`\`\`\nbrew tap atlassian/homebrew-acli && brew install acli\n\`\`\`\n\nThen authenticate:\n\n\`\`\`\nacli jira auth login --web --site <your-site>.atlassian.net\n\`\`\`"
+else
+    # Check 2: Is Jira auth valid?
+    if ! acli jira auth status &>/dev/null; then
+        message="⚠️ **Jira Plugin: Authentication expired.** Re-authenticate with:\n\n\`\`\`\nacli jira auth login --web --site <your-site>.atlassian.net\n\`\`\`"
+    fi
+fi
+
+# If no issues, output minimal success JSON and exit
+if [ -z "$message" ]; then
+    cat <<'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": ""
+  }
+}
+EOF
+    exit 0
+fi
+
+# Inject guidance into session context
+escaped_message=$(escape_for_json "$message")
+
+cat <<EOF
+{
+  "additional_context": "${escaped_message}",
+  "hookSpecificOutput": {
+    "hookEventName": "SessionStart",
+    "additionalContext": "${escaped_message}"
+  }
+}
+EOF
+
+exit 0

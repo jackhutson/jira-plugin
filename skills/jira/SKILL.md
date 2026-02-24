@@ -36,6 +36,7 @@ Remember the user's choice for the rest of the session. The user can say "switch
 | "Start working on X", "mark X as done", "X is blocked", "send for review" | `jira-progress` |
 | "Break this spec into tickets", "create tickets from this plan" | `jira-decompose` |
 | "Work on X", "pick up X", "agent handle X" | `jira-work` |
+| "Configure workflow for X", "set up statuses", "refresh workflow" | `jira-workflow` |
 
 ## Ad-hoc Operations
 

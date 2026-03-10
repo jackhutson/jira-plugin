@@ -1,0 +1,2 @@
+# Site-specific workflow configuration (populated at runtime with project keys and status names)
+config/workflows.json

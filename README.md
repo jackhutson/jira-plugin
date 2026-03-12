@@ -18,38 +18,51 @@ Two execution modes are available per session:
 
 ## Installation
 
-### 1. Install the plugin
+### 1. Install the Atlassian CLI
 
-```bash
-claude plugin add /path/to/jira-plugin
-```
-
-Or clone this repo and add it from the local path:
-
-```bash
-git clone https://github.com/jackhutson/jira-plugin.git
-claude plugin add ./jira-plugin
-```
-
-### 2. Install the Atlassian CLI
-
-The plugin requires the [Atlassian CLI (ACLI)](https://developer.atlassian.com/cloud/acli/), the official Atlassian command-line tool (GA since May 2025):
+The plugin requires the [Atlassian CLI (ACLI)](https://developer.atlassian.com/cloud/acli/), the official Atlassian command-line tool:
 
 ```bash
 brew tap atlassian/homebrew-acli && brew install acli
 ```
 
-> On Linux or Windows (WSL), see the [ACLI documentation](https://developer.atlassian.com/cloud/acli/) for alternative installation methods.
+> On Linux or Windows (WSL), see the [ACLI documentation](https://developer.atlassian.com/cloud/acli/guides/install-acli/) for alternative installation methods.
 
-### 3. Authenticate with your Jira site
+### 2. Authenticate with your Jira site
 
 ```bash
-acli jira auth login --web --site <your-site>.atlassian.net
+acli jira auth login
 ```
 
-This opens a browser for OAuth. Tokens are stored in `~/.acli/` and refresh automatically.
+This launches an interactive wizard that walks you through authentication. You can also use `acli jira auth login --web` to authenticate directly via your browser.
 
-> **Don't have ACLI yet?** That's fine — install the plugin first. A startup hook runs on every session and will tell you exactly what's missing and how to fix it. You can also set up ACLI at any point; the plugin will detect it on the next session start or the first time you mention Jira.
+> **Don't have ACLI yet?** That's fine — install the plugin first (step 3). A startup hook runs on every session and will tell you exactly what's missing and how to fix it. You can set up ACLI at any point; the plugin will detect it on the next session start or the first time you mention Jira.
+
+### 3. Install the plugin
+
+Plugin installation is a two-step process — add the marketplace, then install the plugin from it.
+
+**From a local clone:**
+
+```bash
+git clone https://github.com/jackhutson/jira-plugin.git
+```
+
+Then inside Claude Code:
+
+```
+/plugin marketplace add ./jira-plugin
+/plugin install jira@jira-marketplace
+```
+
+**From GitHub (no clone needed):**
+
+```
+/plugin marketplace add jackhutson/jira-plugin
+/plugin install jira@jackhutson-jira-plugin
+```
+
+After installing, run `/reload-plugins` to load the skills.
 
 ### 4. Verify
 
@@ -96,6 +109,8 @@ Discovered workflows are cached in `config/workflows.json` so discovery only run
 
 ```
 jira-plugin/
+├── .claude/
+│   └── settings.local.json   # Permissions whitelist for plugin tool access
 ├── .claude-plugin/
 │   ├── plugin.json           # Plugin metadata
 │   └── marketplace.json      # Distribution config
@@ -157,7 +172,7 @@ Permissions whitelist for the plugin's tool access (bash commands, web fetches t
 
 **"ACLI not installed"** — Run `brew tap atlassian/homebrew-acli && brew install acli`
 
-**"Authentication expired"** — Run `acli jira auth login --web --site <your-site>.atlassian.net`
+**"Authentication expired"** — Run `acli jira auth login`
 
 **Transition fails with "status not found"** — Your project may use custom status names. Run `/jira-workflow` to re-discover and update the cached mapping.
 

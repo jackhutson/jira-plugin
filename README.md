@@ -59,7 +59,7 @@ Then inside Claude Code:
 
 ```
 /plugin marketplace add jackhutson/jira-plugin
-/plugin install jira@jackhutson-jira-plugin
+/plugin install jira@jira-marketplace
 ```
 
 After installing, run `/reload-plugins` to load the skills.
@@ -174,7 +174,7 @@ Permissions whitelist for the plugin's tool access (bash commands, web fetches t
 
 **"Authentication expired"** — Run `acli jira auth login`
 
-**Transition fails with "status not found"** — Your project may use custom status names. Run `/jira-workflow` to re-discover and update the cached mapping.
+**Transition fails with "status not found"** — Your project may use custom status names. Run `/jira:jira-workflow` to re-discover and update the cached mapping.
 
 **Permission denied on hooks** — Ensure the hook script is executable: `chmod +x hooks/session-start`
 

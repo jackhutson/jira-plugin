@@ -26,6 +26,18 @@ acli jira auth status
 Do NOT guess the installation status. If the command runs at all, ACLI is installed.
 Do NOT automate auth — just check and inform.
 
+## Ticket Key Resolution
+
+When the user provides bare numbers (e.g., "3529" instead of "UX-3529"):
+
+1. Read `config/workflows.json` and get the list of configured project keys
+2. If exactly one project is configured → prefix automatically (e.g., "3529" → "UX-3529")
+3. If a `default_project` is set → use it as the prefix
+4. If multiple projects, no default → ask: "Which project? [UX, PL, ...]"
+5. If no projects configured → ask: "What's the project key? (e.g., UX, PROJ)"
+
+Also infer from context: if the user says "set UX-3529 to done and 2692 to in progress", infer "2692" → "UX-2692" from the explicit key in the same message.
+
 ## Mode Selection (First Jira Invocation Per Session)
 
 Present two options to the user:
@@ -44,11 +56,13 @@ Remember the user's choice for the rest of the session. The user can say "switch
 | "Break this spec into tickets", "create tickets from this plan" | `jira-decompose` |
 | "Work on X", "pick up X", "agent handle X" | `jira-work` |
 | "Configure workflow for X", "set up statuses", "refresh workflow" | `jira-workflow` |
+| Ad-hoc ACLI operations (create, search, bulk, sprint, board) | `acli` |
 
 ## Ad-hoc Operations
 
-For intents that don't match a workflow (e.g., "just create a blank ticket", "search for bugs in PROJ", "delete PROJ-99"), handle directly using ACLI:
+For intents that don't match a workflow (create, search, bulk update, sprint queries, board queries), load the `acli` skill for the comprehensive command reference, then execute directly.
 
+Quick-reference:
 - **Create:** `acli jira workitem create --summary "..." --project "PROJ" --type "Task" --yes`
 - **Search:** `acli jira workitem search --jql "..." --fields "key,summary,status,assignee" --csv`
 - **Edit:** `acli jira workitem edit --key "KEY-123" --summary "..." --yes`

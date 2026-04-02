@@ -100,3 +100,4 @@ If ACLI returns exit code != 0:
 - "trace id:" prefix → Unexpected server error, report trace ID
 - Transition failure → Check if transitions graph is configured. If so, report valid moves. If not, suggest Rovo discovery via `jira-workflow`.
 - Other → Report raw error message
+- **After any error:** If you have already retried once, stop and report the error to the user. Do not attempt alternative approaches or workarounds.

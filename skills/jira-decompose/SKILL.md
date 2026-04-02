@@ -26,37 +26,77 @@ Analyze the document and propose a hierarchy — one epic for the overall effort
 
 Each ticket gets: summary, description with acceptance criteria, suggested assignee if mentioned in the source.
 
-Present for approval:
+Present for approval (include story point estimates):
 
 ```
 Proposed breakdown for "Auth System Redesign":
 
 Epic: AUTH-??? "Auth System Redesign"
-├── Task: "Migrate session store to Redis" — assignee: alice@...
-├── Task: "Implement JWT refresh flow" — assignee: bob@...
-├── Task: "Add rate limiting to auth endpoints" — unassigned
-└── Task: "Update auth integration tests" — unassigned
+├── Task: "Migrate session store to Redis" — assignee: alice@... (3 pts)
+├── Task: "Implement JWT refresh flow" — assignee: bob@... (5 pts)
+├── Task: "Add rate limiting to auth endpoints" — unassigned (2 pts)
+└── Task: "Update auth integration tests" — unassigned (1 pt)
 
-Create these 5 tickets? (You can adjust before I create them)
+Create these 5 tickets? (You can adjust summaries, assignees, and story points before I create them)
 ```
+
+If the user doesn't provide estimates, default all story points to 0 (avoids null values cluttering sprint planning).
 
 **Always propose before creating.** Bulk ticket creation is hard to undo. Wait for explicit user approval.
 
 ### 3. Create Tickets
 
-On approval, create in order:
+On approval, create in order using `--from-json` to support story points and custom fields.
+
+**Discover the story points field ID first** (only needed once per project):
+```
+acli jira workitem search --jql "project = PROJ AND 'Story Points' is not EMPTY" --fields "key" --limit 1 --json
+acli jira workitem view PROJ-NNN --fields "*all" --json | jq -r '.fields | to_entries[] | select(.value != null and (.value | type == "number")) | "\(.key): \(.value)"'
+```
+Look for a `customfield_*` with a numeric value matching known story points. Common IDs: `customfield_10020`, `customfield_10003`.
 
 **Epic first:**
-```
-acli jira workitem create --summary "Epic title" --project "PROJ" --type "Epic" --description "..." --yes
+```bash
+cat > /tmp/jira-create.json << 'EOF'
+{
+  "summary": "Epic title",
+  "projectKey": "PROJ",
+  "type": "Epic",
+  "description": {
+    "type": "doc", "version": 1,
+    "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Description here"}]}]
+  }
+}
+EOF
+acli jira workitem create --from-json /tmp/jira-create.json --json
 ```
 
-**Children with parent linkage:**
-```
-acli jira workitem create --summary "Task title" --project "PROJ" --type "Task" --parent "EPIC-KEY" --description "..." --assignee "user@email.com" --yes
+Capture the returned key (e.g., `PROJ-100`).
+
+**Children with parent linkage and story points:**
+```bash
+cat > /tmp/jira-create.json << 'EOF'
+{
+  "summary": "Task title",
+  "projectKey": "PROJ",
+  "type": "Task",
+  "parentIssueId": "PROJ-100",
+  "assignee": "user@email.com",
+  "description": {
+    "type": "doc", "version": 1,
+    "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Acceptance criteria here"}]}]
+  },
+  "additionalAttributes": {
+    "customfield_10020": 3
+  }
+}
+EOF
+acli jira workitem create --from-json /tmp/jira-create.json --json
 ```
 
-Repeat for each child ticket. Capture the returned key for each.
+Repeat for each child ticket. Set story points in `additionalAttributes` using the discovered field ID. Default to `0` if no estimate provided.
+
+**Note:** Story points can only be set at creation time. The `edit --from-json` schema does not support `additionalAttributes`. If story points need to change later, they must be updated in the Jira web UI.
 
 ### 4. Return Summary
 
@@ -80,3 +120,4 @@ If ACLI returns exit code != 0:
 - "trace id:" prefix → Unexpected server error, report trace ID
 - If a child ticket fails to create, report which ones succeeded and which failed — don't roll back the ones that worked
 - Other → Report raw error message
+- **After any error:** If you have already retried once, stop and report the error to the user. Do not attempt alternative approaches or workarounds.

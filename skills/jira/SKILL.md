@@ -10,14 +10,21 @@ description: >
 
 ## Prereq Check (First Use Per Session)
 
-Run via bash:
+**Skip this check if the SessionStart hook already confirmed ACLI is installed and authenticated** (look for "✅ Jira Plugin: ACLI installed and authenticated" in the session context).
+
+If no session-start confirmation is present, verify manually:
+
 ```
 acli jira auth status
 ```
 
-- **If auth fails:** Tell the user to run: `acli jira auth login --web --site <site>.atlassian.net`
-- **If acli not found:** Tell the user to run: `brew tap atlassian/homebrew-acli && brew install acli`
-- Do NOT automate auth — just check and inform.
+**Interpreting the output:**
+- **Exit code 0 + output shows a site/user** → ACLI is installed and authenticated. Proceed.
+- **Exit code non-zero + "authentication" in output** → Installed but auth expired. Tell the user: `acli jira auth login --web --site <site>.atlassian.net`
+- **"command not found: acli"** → Not installed. Tell the user: `brew tap atlassian/homebrew-acli && brew install acli`
+
+Do NOT guess the installation status. If the command runs at all, ACLI is installed.
+Do NOT automate auth — just check and inform.
 
 ## Mode Selection (First Jira Invocation Per Session)
 

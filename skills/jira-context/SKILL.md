@@ -24,7 +24,7 @@ acli jira workitem search --jql "parent = KEY-123" --fields "key,summary,status"
 
 3. **Fetch recent comments:**
 ```
-acli jira workitem comment-list --key "KEY-123"
+acli jira workitem comment list --key "KEY-123"
 ```
 
 4. **Package as structured context:**
@@ -57,3 +57,4 @@ If ACLI returns exit code != 0:
 - "command not found: acli" → Tell user: `brew tap atlassian/homebrew-acli && brew install acli`
 - "trace id:" prefix → Unexpected server error, report trace ID
 - Other → Report raw error message
+- **After any error:** If you have already retried once, stop and report the error to the user. Do not attempt alternative approaches or workarounds.

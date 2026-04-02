@@ -27,7 +27,7 @@ Assign the ticket and signal that work is starting:
 ```
 acli jira workitem assign --key "KEY-123" --assignee "user@email.com"
 acli jira workitem transition --key "KEY-123" --status "START_STATUS" --yes
-acli jira workitem comment-create --key "KEY-123" --body "Picked up by agent — starting work"
+acli jira workitem comment create --key "KEY-123" --body "Picked up by agent — starting work"
 ```
 
 Where `START_STATUS` is resolved from `config/workflows.json` → `projects.PROJECT_KEY.statuses.start`.
@@ -41,7 +41,7 @@ Load the full ticket context to understand what needs to be done:
 ```
 acli jira workitem view KEY-123 --fields "key,summary,status,assignee,priority,issuetype,description" --json
 acli jira workitem search --jql "parent = KEY-123" --fields "key,summary,status" --csv
-acli jira workitem comment-list --key "KEY-123"
+acli jira workitem comment list --key "KEY-123"
 ```
 
 Parse from the description:
@@ -64,7 +64,7 @@ The skill defines the Jira checkpoints, not the work itself.
 **If blocked:**
 ```
 acli jira workitem transition --key "KEY-123" --status "BLOCK_STATUS" --yes
-acli jira workitem comment-create --key "KEY-123" --body "Blocked: [describe the blocker]"
+acli jira workitem comment create --key "KEY-123" --body "Blocked: [describe the blocker]"
 ```
 
 Where `BLOCK_STATUS` is resolved from `config/workflows.json` → `projects.PROJECT_KEY.statuses.block`.
@@ -73,7 +73,7 @@ Stop and report to the user.
 
 **If a scope question arises:**
 ```
-acli jira workitem comment-create --key "KEY-123" --body "Question: [the question]"
+acli jira workitem comment create --key "KEY-123" --body "Question: [the question]"
 ```
 Ask the user before proceeding.
 
@@ -82,7 +82,7 @@ Ask the user before proceeding.
 When work is finished:
 
 ```
-acli jira workitem comment-create --key "KEY-123" --body "Completed: [summary of what was done, what changed, any follow-ups]"
+acli jira workitem comment create --key "KEY-123" --body "Completed: [summary of what was done, what changed, any follow-ups]"
 acli jira workitem transition --key "KEY-123" --status "DONE_STATUS" --yes
 ```
 
@@ -100,3 +100,4 @@ If ACLI returns exit code != 0:
 - "trace id:" prefix → Unexpected server error, report trace ID
 - Transition failure → Check if transitions graph is configured. If so, report valid moves. If not, suggest Rovo discovery via `jira-workflow`.
 - Other → Report raw error message
+- **After any error:** If you have already retried once, stop and report the error to the user. Do not attempt alternative approaches or workarounds.

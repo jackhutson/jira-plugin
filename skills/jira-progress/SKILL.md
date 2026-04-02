@@ -39,7 +39,7 @@ acli jira workitem transition --key "KEY-123" --status "RESOLVED_STATUS" --yes
 ```
 7. **Add a comment** — compose from context, not a canned string:
 ```
-acli jira workitem comment-create --key "KEY-123" --body "Started work on the API refactor — focusing on the auth endpoints first"
+acli jira workitem comment create --key "KEY-123" --body "Started work on the API refactor — focusing on the auth endpoints first"
 ```
 8. **Update fields** if relevant (e.g., claim assignee on `start`):
 ```

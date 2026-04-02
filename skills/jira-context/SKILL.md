@@ -24,7 +24,7 @@ acli jira workitem search --jql "parent = KEY-123" --fields "key,summary,status"
 
 3. **Fetch recent comments:**
 ```
-acli jira workitem comment-list --key "KEY-123"
+acli jira workitem comment list --key "KEY-123"
 ```
 
 4. **Package as structured context:**

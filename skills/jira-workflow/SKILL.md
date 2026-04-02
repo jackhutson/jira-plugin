@@ -22,7 +22,9 @@ Project "PROJECT_KEY" doesn't have workflow statuses configured yet.
 I can set this up two ways:
 
 A) Auto-discover — I'll search for statuses in PROJECT_KEY and propose a mapping
-B) Rovo prompt — I'll give you a prompt to paste into Rovo for the full workflow definition
+   (quick, but won't capture transition rules)
+B) Rovo prompt — I'll give you a prompt to paste into Rovo AI for the complete
+   workflow including transitions and required fields (more accurate)
 
 Which do you prefer?
 ```
@@ -78,24 +80,22 @@ Example entry added:
 
 ### 2B. Rovo prompt
 
-Generate and display this prompt for the user to paste into their Jira Rovo AI chat. Replace PROJECT_KEY and PROJECT_NAME with the actual values (get project name from `acli jira project view --key "PROJECT_KEY" --json`):
+1. Find a ticket key in the target project to anchor the prompt:
+```
+acli jira workitem search --jql "project = PROJECT_KEY ORDER BY created DESC" --fields "key" --limit 1 --json
+```
+
+Extract the key (e.g., `PROJECT_KEY-123`).
+
+2. Generate and display this prompt for the user to paste into their Jira Rovo AI chat:
 
 ```
 Paste this into Rovo:
 
 ---
-For project PROJECT_KEY (PROJECT_NAME), give me:
+Please provide the complete workflow for PROJECT_KEY-123 ticket.
 
-1. The name of the workflow(s) used by this project
-2. All statuses in each workflow
-3. The valid transitions between statuses — for each status, list which
-   statuses it can transition to
-4. For each status, map it to the closest match from this list:
-   start, review, done, block, reopen
-5. Are any fields required when transitioning to terminal statuses
-   (e.g., resolution field when moving to Done)?
-
-Format the answer as JSON like this:
+Format the workflow as JSON with this structure:
 {
   "workflow_name": "...",
   "statuses": {
@@ -113,15 +113,24 @@ Format the answer as JSON like this:
     "DONE": ["resolution"]
   }
 }
+
+For the "statuses" mapping, assign each project status to the closest match:
+- start = the status for active work (e.g., "In Progress")
+- review = the status for code/peer review (e.g., "In Review")
+- done = the terminal completed status (e.g., "Done")
+- block = the blocked/impediment status (e.g., "Blocked")
+- reopen = the status for returning work to the queue (e.g., "Reopened", "To Do")
 ---
 ```
 
-When the user pastes Rovo's response back:
+Replace `PROJECT_KEY-123` with the actual ticket key found in step 1.
 
-1. Parse the JSON from the response (handle markdown code fences if present)
-2. Read `config/workflows.json`
-3. Add the project entry with `statuses`, `transitions`, and `required_fields` (if any)
-4. Write the file back
+3. When the user pastes Rovo's response back:
+   - Parse the JSON from the response (handle markdown code fences if present)
+   - Validate that `statuses` contains at least `start` and `done` mappings
+   - Read `config/workflows.json`
+   - Add the project entry with `statuses`, `transitions`, and `required_fields` (if any)
+   - Write the file back
 
 ### 3. Confirm
 

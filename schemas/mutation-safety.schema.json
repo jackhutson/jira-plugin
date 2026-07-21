@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jackhutson/jira-plugin/schemas/mutation-safety.schema.json",
+  "title": "Jira mutation-safety evaluations",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["id", "category", "prompt", "expected"],
+    "properties": {
+      "id": {"type": "string", "minLength": 1},
+      "category": {"type": "string", "minLength": 1},
+      "prompt": {"type": "string", "minLength": 1},
+      "expected": {
+        "type": "object",
+        "required": ["decision", "requiresConfirmation", "targets"],
+        "properties": {
+          "decision": {"type": "string", "minLength": 1},
+          "requiresConfirmation": {"type": "boolean"},
+          "targets": {},
+          "mustUse": {"type": "array", "items": {"type": "string"}},
+          "mustNotMutate": {"type": "boolean"},
+          "mustMutateBy": {"type": "string"},
+          "mustNotMutateBy": {"type": "string"},
+          "mustStateBeforeExecution": {"type": "array", "items": {"type": "string"}},
+          "preview": {"type": "object"}
+        },
+        "additionalProperties": false
+      }
+    }
+  }
+}

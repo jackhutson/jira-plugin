@@ -3,13 +3,36 @@ name: jira-workflow
 description: >
   Use when a project's workflow statuses need to be configured for the first
   time, or refreshed. Triggered automatically by jira-progress when a project
-  is missing from config/workflows.json, or manually via "configure workflow",
+  is missing from persistent configuration, or manually via "configure workflow",
   "set up statuses for X", "refresh workflow for X".
 ---
 
 # Workflow Discovery (ACLI)
 
-Discovers a project's Jira statuses and maps them to stage names used by jira-progress. Results are cached in `config/workflows.json` so this only runs once per project.
+Discovers a project's Jira statuses and maps them to stage names used by
+jira-progress. Results are stored persistently by Jira site and project through
+the shared runtime helper.
+
+This workflow reads Jira and changes only plugin-local configuration. If its
+discovery leads to a Jira mutation, first read and apply
+`${CLAUDE_PLUGIN_ROOT}/docs/mutation-safety.md`.
+
+## Persistent Configuration
+
+Determine the exact authenticated Jira site hostname before reading or writing
+configuration. Use the site reported by the SessionStart context when present;
+otherwise run the shared helper's `doctor --json`. If `data.sites` has more than
+one entry and the target is ambiguous, ask the user which site to use. Never
+infer a site from a project key.
+
+All configuration access goes through the helper interface:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/jira-plugin.mjs" config get --site "SITE" --project "PROJECT_KEY" --json
+```
+
+`CONFIG_NOT_FOUND` means that site/project pair is not configured. On any other
+error, show the helper's `message` and stop.
 
 ## Procedure
 
@@ -61,22 +84,27 @@ Proposed mapping:
 Look right? You can adjust any of these.
 ```
 
-5. After user confirms or adjusts, read `config/workflows.json`, add the project entry with `statuses` only (no `transitions` — auto-discover can't get those), and write the file back.
+5. After the user confirms or adjusts, save a project object with `statuses`
+   only (no `transitions` — auto-discover cannot get those):
 
-Example entry added:
-```json
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/jira-plugin.mjs" config set --site "SITE" --project "PROJECT_KEY" --from-json - --json <<'JSON'
 {
-  "PROJECT_KEY": {
-    "statuses": {
-      "start": "IN PROGRESS",
-      "review": "VERIFY",
-      "done": "DONE",
-      "block": "Blocked",
-      "reopen": "TODO"
-    }
+  "statuses": {
+    "start": "IN PROGRESS",
+    "review": "VERIFY",
+    "done": "DONE",
+    "block": "Blocked",
+    "reopen": "TODO"
   }
 }
+JSON
 ```
+
+Add `--default` to this same command only when the user also confirmed this is
+the site's default project for resolving bare ticket numbers. The helper
+validates the object and commits the project/default change atomically.
+
 
 ### 2B. Rovo prompt
 
@@ -128,15 +156,23 @@ Replace `PROJECT_KEY-123` with the actual ticket key found in step 1.
 3. When the user pastes Rovo's response back:
    - Parse the JSON from the response (handle markdown code fences if present)
    - Validate that `statuses` contains at least `start` and `done` mappings
-   - Read `config/workflows.json`
-   - Add the project entry with `statuses`, `transitions`, and `required_fields` (if any)
-   - Write the file back
+   - Keep `workflow_name`, `statuses`, `transitions`, and `required_fields` (when present) as the project object
+   - Pipe that object to the helper's `config set` command shown above
+
+To make a configured project the default for bare ticket numbers on this site:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/jira-plugin.mjs" config set --site "SITE" --project "PROJECT_KEY" --from-json - --default --json
+```
+
+Pipe the same confirmed project object to this command. The helper hides where
+the site-level default and project configuration are stored.
 
 ### 3. Confirm
 
 After either path completes:
 ```
-Workflow configured for PROJECT_KEY. Statuses saved to config/workflows.json.
+Workflow configured for PROJECT_KEY on SITE. Statuses saved in persistent plugin data.
 ```
 
 If this was triggered by jira-progress, tell the agent to resume the original transition.
@@ -145,4 +181,4 @@ If this was triggered by jira-progress, tell the agent to resume the original tr
 
 - ACLI search returns no results → "No issues found in PROJECT_KEY. Is the project key correct?"
 - User provides invalid JSON from Rovo → "Couldn't parse that JSON. Can you paste just the JSON block from Rovo's response?"
-- Config file missing or malformed → Create a fresh `{"projects": {}}` and proceed
+- Helper error → Show its stable `message` and stop; never inspect or repair its storage directly

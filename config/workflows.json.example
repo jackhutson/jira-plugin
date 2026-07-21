@@ -1,4 +1,18 @@
 {
-  "default_project": "",
-  "projects": {}
+  "sites": {
+    "example.atlassian.net": {
+      "default_project": "PROJ",
+      "projects": {
+        "PROJ": {
+          "statuses": {
+            "start": "In Progress",
+            "review": "In Review",
+            "done": "Done",
+            "block": "Blocked",
+            "reopen": "To Do"
+          }
+        }
+      }
+    }
+  }
 }

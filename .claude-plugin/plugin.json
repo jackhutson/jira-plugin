@@ -1,10 +1,12 @@
 {
   "name": "jira",
-  "description": "Token-efficient Jira integration via Atlassian CLI with progressive skill disclosure",
-  "version": "1.0.0",
+  "description": "Jira Cloud workflows through Atlassian CLI with direct skills, durable workflow mappings, and mutation safeguards",
+  "version": "1.1.0",
   "author": {
     "name": "Jack Hutson"
   },
+  "homepage": "https://github.com/jackhutson/jira-plugin#readme",
+  "repository": "https://github.com/jackhutson/jira-plugin",
   "license": "MIT",
-  "keywords": ["jira", "atlassian", "acli", "project-management"]
+  "keywords": ["jira", "jira-cloud", "atlassian", "acli", "project-management", "workflow-automation"]
 }

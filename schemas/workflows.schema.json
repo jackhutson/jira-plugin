@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jackhutson/jira-plugin/schemas/workflows.schema.json",
+  "title": "Jira plugin workflow state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sites"],
+  "properties": {
+    "sites": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/site"
+      }
+    }
+  },
+  "$defs": {
+    "site": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default_project", "projects"],
+      "properties": {
+        "default_project": {
+          "type": ["string", "null"],
+          "pattern": "^[A-Z][A-Z0-9_]*$"
+        },
+        "projects": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/project"
+          }
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statuses"],
+      "properties": {
+        "workflow_name": {"type": "string", "minLength": 1},
+        "statuses": {
+          "type": "object",
+          "required": ["start", "done"],
+          "additionalProperties": {"type": "string", "minLength": 1}
+        },
+        "transitions": {"$ref": "#/$defs/stringArrayMap"},
+        "required_fields": {"$ref": "#/$defs/stringArrayMap"}
+      }
+    },
+    "stringArrayMap": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

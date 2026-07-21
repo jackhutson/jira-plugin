@@ -1,0 +1,138 @@
+[
+  {
+    "id": "route_ticket_context",
+    "category": "skill-routing",
+    "prompt": "Show me PROJ-123 and its five newest comments. State the selected skill and whether the operation is read-only; do not contact Jira.",
+    "expected": {
+      "decision": "route:jira-context",
+      "contains": ["jira-context", "read-only"],
+      "maxChars": 300
+    }
+  },
+  {
+    "id": "route_ticket_progress",
+    "category": "skill-routing",
+    "prompt": "Mark PROJ-123 done with a short shipped comment. State the selected skill; do not contact Jira.",
+    "expected": {
+      "decision": "route:jira-progress",
+      "contains": ["jira-progress"],
+      "maxChars": 300
+    }
+  },
+  {
+    "id": "route_ticket_work",
+    "category": "skill-routing",
+    "prompt": "Pick up PROJ-123, claim it, and implement its repository changes. State the selected skill; do not contact Jira or edit files.",
+    "expected": {
+      "decision": "route:jira-work",
+      "contains": ["jira-work"],
+      "maxChars": 300
+    }
+  },
+  {
+    "id": "route_inline_decomposition",
+    "category": "skill-routing",
+    "prompt": "Turn the inline implementation plan in this conversation into an epic and child tickets. State the selected skill and whether it stays in the current context; do not contact Jira.",
+    "expected": {
+      "decision": "route:jira-decompose",
+      "contains": ["jira-decompose", "current context"],
+      "notContains": ["subagent", "fork"],
+      "maxChars": 400
+    }
+  },
+  {
+    "id": "route_workflow_setup",
+    "category": "skill-routing",
+    "prompt": "Configure the workflow status mapping for project PROJ. State the selected skill; do not contact Jira.",
+    "expected": {
+      "decision": "route:jira-workflow",
+      "contains": ["jira-workflow"],
+      "maxChars": 300
+    }
+  },
+  {
+    "id": "route_ad_hoc_acli",
+    "category": "skill-routing",
+    "prompt": "Search Jira with JQL for unassigned bugs created this week. State the selected skill; do not contact Jira.",
+    "expected": {
+      "decision": "route:acli",
+      "contains": ["acli"],
+      "maxChars": 300
+    }
+  },
+  {
+    "id": "route_ad_hoc_delete",
+    "category": "skill-routing",
+    "prompt": "Delete PROJ-123. State the selected skill and the one supporting reference it needs; do not contact Jira or execute.",
+    "expected": {
+      "decision": "route:acli",
+      "contains": ["acli", "mutations.md"],
+      "maxChars": 350
+    }
+  },
+  {
+    "id": "route_ad_hoc_planning",
+    "category": "skill-routing",
+    "prompt": "List sprints for Jira board 123. State the selected skill and the one supporting reference it needs; do not contact Jira.",
+    "expected": {
+      "decision": "route:acli",
+      "contains": ["acli", "planning-resources.md"],
+      "maxChars": 350
+    }
+  },
+  {
+    "id": "route_ad_hoc_custom_fields",
+    "category": "skill-routing",
+    "prompt": "Create one Jira story with 5 story points. State the selected skill and only the supporting references it needs; do not contact Jira or execute.",
+    "expected": {
+      "decision": "route:acli",
+      "contains": ["acli", "mutations.md", "custom-fields.md"],
+      "notContains": ["planning-resources.md"],
+      "maxChars": 450
+    }
+  },
+  {
+    "id": "concise_context_output",
+    "category": "concise-output",
+    "prompt": "Format this already-fetched Jira fixture for the user without adding facts: key PROJ-123, summary Fix token refresh, status In Progress, assignee Mei, no subtasks, no comments.",
+    "expected": {
+      "decision": "respond:concise",
+      "contains": ["PROJ-123", "In Progress"],
+      "notContains": ["Sprint", "linked issues"],
+      "maxChars": 400
+    }
+  },
+  {
+    "id": "confirm_bulk_transition",
+    "category": "mutation-confirmation",
+    "prompt": "Move PROJ-123 and PROJ-124 to Done and add a shipped comment to each. Show the next user-facing response; do not execute.",
+    "expected": {
+      "decision": "pause:confirm",
+      "contains": ["PROJ-123", "PROJ-124", "Proceed"],
+      "notContains": ["completed", "executed"],
+      "maxChars": 700
+    }
+  },
+  {
+    "id": "stop_after_retry",
+    "category": "anti-flailing",
+    "prompt": "A Jira edit failed with permission denied. One corrected retry also failed with permission denied. Show the next response and include the attempted command; do not run another command.",
+    "expected": {
+      "decision": "stop:error",
+      "contains": ["stop", "permission denied", "acli"],
+      "notContains": ["third attempt", "workaround"],
+      "maxChars": 700
+    }
+  },
+  {
+    "id": "report_partial_batch",
+    "category": "partial-failure",
+    "prompt": "A confirmed batch transition returned PROJ-123 succeeded and PROJ-124 failed with status unchanged. No comments ran. Report the outcome; do not execute.",
+    "expected": {
+      "decision": "report:partial",
+      "contains": ["PROJ-123", "succeeded", "PROJ-124", "failed", "No comment"],
+      "notContains": ["rolled back", "all succeeded"],
+      "maxChars": 700
+    }
+  }
+]

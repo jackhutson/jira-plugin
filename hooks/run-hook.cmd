@@ -28,7 +28,8 @@ if %ERRORLEVEL% equ 0 (
     exit /b %ERRORLEVEL%
 )
 
-REM No bash found - exit silently
+REM No bash found - emit valid minimal SessionStart context
+echo {"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"Jira Plugin: Bash is unavailable. Install Git for Windows so the portable ACLI health check can run."}}
 exit /b 0
 CMDBLOCK
 

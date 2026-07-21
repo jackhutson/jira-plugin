@@ -1,0 +1,16 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": ["/config/workflows.json.example"],
+      "url": "./schemas/workflows.schema.json"
+    },
+    {
+      "fileMatch": ["/evals/plugin-behavior.json"],
+      "url": "./schemas/plugin-behavior.schema.json"
+    },
+    {
+      "fileMatch": ["/evals/mutation-safety.json"],
+      "url": "./schemas/mutation-safety.schema.json"
+    }
+  ]
+}

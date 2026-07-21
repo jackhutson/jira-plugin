@@ -1,0 +1,39 @@
+name: Model evals
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 9 1 * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-evals-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CLAUDE_CODE_VERSION: 2.1.216
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+jobs:
+  model-evals:
+    name: Credentialed plugin behavior evals
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Validate eval definitions offline
+        run: node scripts/run-model-evals.mjs --validate
+      - name: Explain missing credentials
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo '::notice::ANTHROPIC_API_KEY is not configured; model eval execution is skipped.'
+      - name: Install Claude Code
+        if: env.ANTHROPIC_API_KEY != ''
+        run: npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+      - name: Run no-Bash model evals
+        if: env.ANTHROPIC_API_KEY != ''
+        run: node scripts/run-model-evals.mjs

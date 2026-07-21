@@ -11,6 +11,9 @@ description: >
 
 Reads a source document, proposes a ticket hierarchy, gets user approval, then creates all tickets with proper parent/child relationships.
 
+Before creating anything, read and apply
+`${CLAUDE_PLUGIN_ROOT}/docs/mutation-safety.md`.
+
 ## Procedure
 
 ### 1. Read the Source
@@ -24,7 +27,9 @@ Accept input as:
 
 Analyze the document and propose a hierarchy — one epic for the overall effort, stories/tasks as children scoped to independently deliverable chunks.
 
-Each ticket gets: summary, description with acceptance criteria, suggested assignee if mentioned in the source.
+Each ticket gets: project, type, summary, description with acceptance criteria,
+parent relationship, story points, and suggested assignee if mentioned in the
+source. Resolve assignees to an email or account ID before the preview.
 
 Present for approval (include story point estimates):
 
@@ -42,7 +47,10 @@ Create these 5 tickets? (You can adjust summaries, assignees, and story points b
 
 If the user doesn't provide estimates, default all story points to 0 (avoids null values cluttering sprint planning).
 
-**Always propose before creating.** Bulk ticket creation is hard to undo. Wait for explicit user approval.
+**Always propose before creating.** The proposal is the exact mutation preview:
+include every ticket and relationship, then wait for explicit confirmation.
+Freeze that approved list. Any changed project, type, summary, parent, points,
+assignee, or additional ticket requires a new preview and confirmation.
 
 ### 3. Create Tickets
 
@@ -81,7 +89,7 @@ cat > /tmp/jira-create.json << 'EOF'
   "projectKey": "PROJ",
   "type": "Task",
   "parentIssueId": "PROJ-100",
-  "assignee": "user@email.com",
+  "assignee": "RESOLVED_EMAIL_OR_ACCOUNT_ID",
   "description": {
     "type": "doc", "version": 1,
     "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Acceptance criteria here"}]}]
@@ -94,7 +102,10 @@ EOF
 acli jira workitem create --from-json /tmp/jira-create.json --json
 ```
 
-Repeat for each child ticket. Set story points in `additionalAttributes` using the discovered field ID. Default to `0` if no estimate provided.
+Repeat sequentially for each approved child ticket. Set story points in
+`additionalAttributes` using the discovered field ID. Default to `0` if no
+estimate was approved. Stop immediately if a create fails; do not attempt the
+remaining tickets.
 
 **Note:** Story points can only be set at creation time. The `edit --from-json` schema does not support `additionalAttributes`. If story points need to change later, they must be updated in the Jira web UI.
 
@@ -114,10 +125,7 @@ Created 5 tickets in PROJ:
 
 ## Error Handling
 
-If ACLI returns exit code != 0:
-- "authentication failed" → Tell user: `acli jira auth login --web --site <site>.atlassian.net`
-- "command not found: acli" → Tell user: `brew tap atlassian/homebrew-acli && brew install acli`
-- "trace id:" prefix → Unexpected server error, report trace ID
-- If a child ticket fails to create, report which ones succeeded and which failed — don't roll back the ones that worked
-- Other → Report raw error message
-- **After any error:** If you have already retried once, stop and report the error to the user. Do not attempt alternative approaches or workarounds.
+If ACLI fails, run the shared helper's `doctor --json`. When doctor fails, show
+its `message` and stop. When doctor is healthy, report the exact failed command
+and stderr as an operation error. Retry at most once only when correcting known
+invalid input. If a ticket create fails, stop and report the exact created, failed, and not-attempted tickets; never claim rollback.

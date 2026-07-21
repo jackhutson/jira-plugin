@@ -1,13 +1,24 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "jira-marketplace",
   "owner": {
     "name": "Jack Hutson"
   },
+  "description": "Jira Cloud workflow skills for Claude Code, powered by Atlassian CLI",
   "plugins": [
     {
       "name": "jira",
       "source": "./",
-      "description": "Token-efficient Jira integration via Atlassian CLI with progressive skill disclosure"
+      "version": "1.1.0",
+      "description": "Direct Jira Cloud workflows with durable status mappings and exact-target mutation safeguards",
+      "author": {
+        "name": "Jack Hutson"
+      },
+      "homepage": "https://github.com/jackhutson/jira-plugin#readme",
+      "repository": "https://github.com/jackhutson/jira-plugin",
+      "license": "MIT",
+      "keywords": ["jira", "jira-cloud", "atlassian", "acli", "workflow-automation"],
+      "category": "productivity"
     }
   ]
 }

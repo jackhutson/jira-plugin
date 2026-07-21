@@ -1,68 +1,36 @@
 #!/usr/bin/env bash
-# SessionStart hook for jira plugin
-# Checks ACLI installation and Jira auth status, injects guidance if needed.
+# Thin SessionStart adapter for the deterministic Jira plugin helper.
 
-# Don't use set -e; we handle errors explicitly
 set -uo pipefail
 
-# Ensure common Homebrew paths are available (hook runs in bash, not user's zsh)
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
-PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-
 escape_for_json() {
-    local s="$1"
-    s="${s//\\/\\\\}"
-    s="${s//\"/\\\"}"
-    s="${s//$'\n'/\\n}"
-    s="${s//$'\r'/\\r}"
-    s="${s//$'\t'/\\t}"
-    printf '%s' "$s"
+    local value="$1"
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    value="${value//$'\n'/\\n}"
+    value="${value//$'\r'/\\r}"
+    value="${value//$'\t'/\\t}"
+    printf '%s' "$value"
 }
 
-message=""
-
-# Check 1: Is acli installed?
-if ! command -v acli &>/dev/null; then
-    message="⚠️ **Jira Plugin: ACLI not installed.** The Jira plugin requires the Atlassian CLI. Install it with:\n\n\`\`\`\nbrew tap atlassian/homebrew-acli && brew install acli\n\`\`\`\n\nThen authenticate:\n\n\`\`\`\nacli jira auth login --web --site <your-site>.atlassian.net\n\`\`\`"
-else
-    # Check 2: Is Jira auth valid? (with timeout to prevent hanging)
-    if ! timeout 5 acli jira auth status &>/dev/null 2>&1; then
-        message="⚠️ **Jira Plugin: Authentication expired.** Re-authenticate with:\n\n\`\`\`\nacli jira auth login --web --site <your-site>.atlassian.net\n\`\`\`"
-    fi
-fi
-
-# If no issues, output positive confirmation with auth details
-if [ -z "$message" ]; then
-    auth_output=$(acli jira auth status 2>&1 || true)
-    site_info=$(echo "$auth_output" | head -3 | tr '\n' ' ' | sed 's/  */ /g')
-
-    success_msg="✅ Jira Plugin: ACLI installed and authenticated. ${site_info}"
-    escaped_success=$(escape_for_json "$success_msg")
-
-    cat <<EOF
-{
-  "hookSpecificOutput": {
-    "hookEventName": "SessionStart",
-    "additionalContext": "${escaped_success}"
-  }
+emit_context() {
+    local escaped_message
+    escaped_message=$(escape_for_json "$1")
+    printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":"%s"}}\n' "$escaped_message"
 }
-EOF
+
+if ! command -v node >/dev/null 2>&1; then
+    emit_context "Jira Plugin: Node.js 22 or newer is required. Install Node.js, then restart Claude Code."
     exit 0
 fi
 
-# Inject guidance into session context
-escaped_message=$(escape_for_json "$message")
-
-cat <<EOF
-{
-  "additional_context": "${escaped_message}",
-  "hookSpecificOutput": {
-    "hookEventName": "SessionStart",
-    "additionalContext": "${escaped_message}"
-  }
-}
-EOF
+helper_path="${CLAUDE_PLUGIN_ROOT}/scripts/jira-plugin.mjs"
+if helper_output=$(node "$helper_path" doctor --hook-json 2>/dev/null); then
+    printf '%s\n' "$helper_output"
+else
+    emit_context "Jira Plugin: The runtime helper failed before it could check ACLI. Reinstall the plugin or run node ${helper_path} doctor --json."
+fi
 
 exit 0

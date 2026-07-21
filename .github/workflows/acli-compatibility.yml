@@ -1,0 +1,59 @@
+name: ACLI compatibility
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "43 8 1 * *"
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: acli-compatibility
+  cancel-in-progress: false
+
+env:
+  CLAUDE_CODE_VERSION: 2.1.216
+
+jobs:
+  latest-stable:
+    name: Latest stable ACLI full validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Claude Code
+        run: npm install --global "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
+      - name: Download latest stable ACLI
+        run: bash scripts/install-acli-test-binary.sh latest /tmp/jira-plugin-acli
+      - name: Run full validation against latest stable ACLI
+        id: compatibility
+        continue-on-error: true
+        env:
+          ACLI_BIN: /tmp/jira-plugin-acli
+        run: bash scripts/validate.sh all
+      - name: Report an actionable compatibility maintenance issue
+        if: steps.compatibility.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          version=$(/tmp/jira-plugin-acli --version 2>&1 || true)
+          title="ACLI compatibility drift: ${version:-unknown latest version}"
+          body="The monthly latest-stable compatibility run failed: ${RUN_URL}
+
+          Action: inspect the failed command contract and full validation output, then update the supported range, command examples, fixtures, and release notes before closing this issue."
+          existing=$(gh issue list --state open --search 'ACLI compatibility drift in:title' --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body" --label bug
+          fi
+          printf '### ACLI compatibility failure\n\n%s\n' "$body" >>"$GITHUB_STEP_SUMMARY"
+      - name: Fail the scheduled check after reporting
+        if: steps.compatibility.outcome == 'failure'
+        run: exit 1

@@ -3,6 +3,14 @@
 All notable changes to this project are documented in this file. The project
 uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-07-20
+
+### Fixed
+
+- Made minimum-version ACLI validation parse the reported version token instead
+  of rejecting valid output when ACLI appends its network-dependent update
+  advisory.
+
 ## [1.1.0] - 2026-07-20
 
 ### Added
@@ -46,4 +54,5 @@ uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Corrected Jira comment creation to use the current `acli jira workitem comment
   create` command shape.
 
+[1.1.1]: https://github.com/jackhutson/jira-plugin/releases/tag/jira--v1.1.1
 [1.1.0]: https://github.com/jackhutson/jira-plugin/releases/tag/jira--v1.1.0

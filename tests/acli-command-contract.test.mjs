@@ -4,10 +4,21 @@ import test from "node:test";
 import {
   ACLI_SUPPORTED_RANGE,
   classifyAcliVersion,
+  parseAcliVersion,
 } from "../scripts/acli-version.mjs";
 
 const acliBinary = process.env.ACLI_BIN || "acli";
 const expectedVersion = process.env.ACLI_EXPECTED_VERSION;
+
+test("ACLI version parsing ignores a trailing update advisory", () => {
+  const output = [
+    "acli version 1.3.15-stable",
+    "You're using an outdated version 1.3.15-stable. Update to the latest version 1.3.22-stable.",
+    "Follow the installation guide to update.",
+  ].join("\n");
+
+  assert.equal(parseAcliVersion(output)?.raw, "1.3.15-stable");
+});
 
 const contracts = [
   {
@@ -132,7 +143,7 @@ test("ACLI executable matches the requested version", () => {
     `${version} is outside supported range ${ACLI_SUPPORTED_RANGE}`,
   );
   if (expectedVersion) {
-    assert.equal(version, `acli version ${expectedVersion}`);
+    assert.equal(compatibility.version.raw, expectedVersion);
   }
 });
 

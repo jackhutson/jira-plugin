@@ -9,7 +9,7 @@
     {
       "name": "jira",
       "source": "./",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "description": "Direct Jira Cloud workflows with durable status mappings and exact-target mutation safeguards",
       "author": {
         "name": "Jack Hutson"
